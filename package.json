@@ -1,0 +1,9 @@
+{
+  "name": "lh-mirror",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LH Mirror - copiloto de reflexión, Diplomado Liderazgo en Acción",
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}

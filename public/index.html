@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LH Mirror</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --navy:#14152E;
+    --navy-card:#1E2049;
+    --navy-card-2:#262856;
+    --purple:#7C6FE0;
+    --purple-dk:#5B4FC4;
+    --green:#2ECC87;
+    --white:#FFFFFF;
+    --muted:#9A9BC0;
+    --muted-2:#6667A0;
+    --border:#33356A;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--navy);
+    color:var(--white);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{ min-height:100vh; display:flex; flex-direction:column; align-items:center; }
+  button{ font-family:inherit; }
+
+  /* ---------- Shared ---------- */
+  .eyebrow{ font-size:11.5px; letter-spacing:2px; font-weight:700; }
+  .top-nav{
+    width:100%; max-width:760px; display:flex; justify-content:space-between; align-items:center;
+    padding:22px 24px 0;
+  }
+  .top-nav .who{ font-size:12.5px; color:var(--muted); }
+  .top-nav .who button{ background:none;border:none;color:var(--muted-2);font-size:11.5px;cursor:pointer;text-decoration:underline;padding:0;margin-left:8px; }
+  .top-nav .links{ display:flex; gap:18px; }
+  .top-nav .links button{ background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:0; }
+  .top-nav .links button:hover{ color:var(--white); }
+
+  /* ---------- Screen: NAME ENTRY ---------- */
+  .name-screen{
+    width:100%; max-width:440px; padding:110px 24px; display:flex; flex-direction:column; align-items:center; text-align:center;
+  }
+  .name-screen h2{ font-family:'Fraunces',serif; font-weight:600; font-size:28px; margin:18px 0 10px; }
+  .name-screen p{ font-size:14px; color:var(--muted); margin:0 0 26px; line-height:1.5; }
+  .name-screen input{
+    width:100%; background:var(--navy-card); border:1px solid var(--border); border-radius:8px;
+    color:var(--white); font-size:15px; padding:13px 14px; margin-bottom:16px; text-align:center;
+  }
+  .name-screen input:focus{ outline:none; border-color:var(--green); }
+
+  /* ---------- Screen: MODE SELECT ---------- */
+  .select-screen{ width:100%; max-width:760px; padding:28px 24px 40px; display:flex; flex-direction:column; align-items:center; }
+  .mirror-mark{ text-align:center; margin-bottom:10px; }
+  .mirror-mark .top{ font-family:'Fraunces',serif; font-weight:600; font-size:clamp(44px,10vw,64px); letter-spacing:1px; line-height:1; color:var(--white); }
+  .waterline{ width:160px; height:1.5px; margin:9px auto; background:linear-gradient(90deg, transparent, var(--green), transparent); }
+  .mirror-mark .bottom{ font-family:'Fraunces',serif; font-weight:600; font-size:clamp(44px,10vw,64px); letter-spacing:1px; line-height:1; color:rgba(255,255,255,0.14); transform:scaleY(-1); }
+  .tagline{ font-family:'Fraunces',serif; font-style:italic; font-size:16px; color:var(--muted); text-align:center; max-width:420px; margin:18px 0 36px; line-height:1.5; }
+
+  .mode-grid{ width:100%; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:600px){ .mode-grid{ grid-template-columns:1fr; } }
+
+  .mode-card{
+    text-align:left; background:var(--navy-card); border:1px solid var(--border); border-left:3px solid var(--accent);
+    border-radius:14px; padding:22px 22px 20px; cursor:pointer; transition:transform .15s ease, background .15s ease;
+    color:inherit; font-family:inherit;
+  }
+  .mode-card:hover{ transform:translateY(-2px); background:var(--navy-card-2); }
+  .mode-card.disabled{ cursor:default; opacity:.45; border-left-color:var(--border); }
+  .mode-card.disabled:hover{ transform:none; background:var(--navy-card); }
+  .mode-card .eyebrow{ color:var(--accent); margin-bottom:10px; display:block; }
+  .mode-card.disabled .eyebrow{ color:var(--muted-2); }
+  .mode-card .glyph{
+    width:34px; height:34px; border-radius:50%; border:1.5px solid var(--accent);
+    display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; color:var(--accent); font-size:16px; margin-bottom:14px;
+  }
+  .mode-card.disabled .glyph{ border-color:var(--muted-2); color:var(--muted-2); }
+  .mode-card h3{ font-family:'Fraunces',serif; font-weight:600; font-size:20px; margin:0 0 8px; color:var(--white); }
+  .mode-card p{ font-size:13px; color:var(--muted); line-height:1.5; margin:0 0 16px; }
+  .mode-card .cta{ font-size:13px; font-weight:600; color:var(--accent); }
+  .mode-card.disabled .cta{ color:var(--muted-2); }
+
+  .footer-note{ margin-top:36px; font-size:12px; color:var(--muted-2); text-align:center; }
+
+  /* ---------- Screen: INTRO ---------- */
+  .intro-screen{ width:100%; max-width:640px; padding:40px 24px; display:flex; flex-direction:column; align-items:flex-start; }
+  .back-link{ background:none;border:none;color:var(--muted); font-size:13px;cursor:pointer; padding:0; margin-bottom:28px; }
+  .back-link:hover{ color:var(--white); }
+  .intro-screen h2{ font-family:'Fraunces',serif; font-weight:600; font-size:32px; margin:10px 0 18px; color:var(--white); }
+  .intro-screen .body-text{ font-size:15px; line-height:1.6; color:var(--muted); margin-bottom:28px; }
+  .start-btn{ background:var(--accent); color:var(--navy); border:none; border-radius:8px; padding:14px 26px; font-weight:700; font-size:14.5px; cursor:pointer; }
+  .start-btn:hover{ opacity:.9; }
+
+  /* ---------- Screen: CHAT ---------- */
+  .chat-screen{ width:100%; max-width:720px; flex:1; display:flex; flex-direction:column; height:100vh; }
+  .chat-header{ display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid var(--border); }
+  .chat-header .brand .mark{ font-family:'Fraunces',serif; font-weight:600; font-size:18px; }
+  .chat-header .mode-label{ font-size:11px; letter-spacing:1px; font-weight:700; }
+  .chat-header .actions{ display:flex; gap:14px; }
+  .chat-header button{ background:none;border:none;color:var(--muted); font-size:12.5px; cursor:pointer; padding:0; }
+  .chat-header button:hover{ color:var(--white); }
+
+  .messages{ flex:1; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:16px; }
+  .msg{ max-width:82%; padding:13px 16px; border-radius:12px; font-size:14.5px; line-height:1.55; white-space:pre-wrap; }
+  .msg.assistant{ align-self:flex-start; background:var(--navy-card); border-left:3px solid var(--accent); color:var(--white); border-top-left-radius:2px; }
+  .msg.user{ align-self:flex-end; background:var(--purple-dk); color:var(--white); border-top-right-radius:2px; }
+  .msg.thinking{ align-self:flex-start; color:var(--muted); font-style:italic; font-size:13.5px; background:none; padding:4px 16px; }
+  .msg.error{ align-self:flex-start; background:transparent; border:1px solid #6B4A4A; color:#E0AFAF; font-size:13.5px; }
+
+  .composer{ display:flex; gap:10px; padding:14px 24px 10px; border-top:1px solid var(--border); }
+  .composer textarea{ flex:1; resize:none; background:var(--navy-card); border:1px solid var(--border); border-radius:10px; color:var(--white); font-size:14.5px; padding:12px 14px; height:48px; line-height:1.4; }
+  .composer textarea:focus{ outline:none; border-color:var(--accent); }
+  .composer button{ background:var(--accent); color:var(--navy); border:none; border-radius:10px; padding:0 20px; font-weight:700; font-size:14px; cursor:pointer; }
+  .composer button:disabled{ opacity:.4; cursor:default; }
+
+  .toolbar{ display:flex; justify-content:center; gap:12px; padding:0 24px 16px; flex-wrap:wrap; }
+  .toolbar button{ background:none; border:1px solid var(--border); color:var(--muted); font-size:12px; cursor:pointer; padding:8px 14px; border-radius:20px; }
+  .toolbar button:hover{ color:var(--white); border-color:var(--muted); }
+  .toolbar button.copy{ color:var(--purple); border-color:#453D8A; }
+  .toolbar button.save{ color:var(--green); border-color:#1E5B41; }
+
+  /* ---------- Screen: BITACORA / PROYECTO ---------- */
+  .bitacora-screen, .project-screen{ width:100%; max-width:720px; padding:16px 24px 60px; }
+  .bitacora-screen h2, .project-screen h2{ font-family:'Fraunces',serif; font-weight:600; font-size:30px; margin:14px 0 6px; }
+  .bitacora-screen .sub, .project-screen .sub{ font-size:14px; color:var(--muted); margin-bottom:30px; line-height:1.5; }
+  .entry-card{ background:var(--navy-card); border-radius:12px; padding:18px 20px; margin-bottom:14px; border-left:3px solid var(--accent-e); }
+  .entry-card .meta{ font-size:11px; color:var(--muted-2); letter-spacing:.5px; margin-bottom:8px; text-transform:uppercase; }
+  .entry-card .summary{ font-size:14px; line-height:1.55; color:var(--white); white-space:pre-wrap; }
+  .empty-state{ text-align:center; padding:60px 20px; color:var(--muted-2); font-size:14px; }
+
+  .project-part{ background:var(--navy-card); border-radius:12px; padding:20px; margin-bottom:16px; }
+  .project-part .head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .project-part .headline{ display:flex; align-items:center; }
+  .project-part .num{ display:inline-flex; width:26px;height:26px;border-radius:50%; background:var(--purple); color:var(--white); align-items:center; justify-content:center; font-size:12.5px; font-weight:700; margin-right:10px; flex-shrink:0; }
+  .project-part .title{ font-family:'Fraunces',serif; font-size:17px; font-weight:600; }
+  .project-part .phase-tag{ font-size:10px; letter-spacing:.5px; color:var(--muted-2); text-transform:uppercase; }
+  .project-part .qgroup{ margin-bottom:12px; margin-left:36px; }
+  .project-part .qlabel{ font-size:12.5px; color:var(--muted); margin-bottom:5px; }
+  .project-part textarea{
+    width:100%; min-height:52px; background:var(--navy); border:1px solid var(--border); border-radius:8px;
+    color:var(--white); font-size:13.5px; font-family:'Inter',sans-serif; padding:10px 12px; line-height:1.5; resize:vertical;
+  }
+  .project-part textarea:focus{ outline:none; border-color:var(--green); }
+  .project-part .footer-row{ display:flex; justify-content:space-between; align-items:center; margin-top:12px; margin-left:36px; flex-wrap:wrap; gap:10px; }
+  .status-group{ display:flex; gap:6px; }
+  .status-pill{ background:none; border:1px solid var(--border); color:var(--muted); font-size:11px; cursor:pointer; padding:5px 11px; border-radius:14px; }
+  .status-pill.active{ color:var(--navy); font-weight:700; }
+  .project-part .actions-right{ display:flex; align-items:center; gap:14px; }
+  .project-part .ask-help{ background:none; border:none; color:var(--purple); font-size:12px; cursor:pointer; padding:0; text-decoration:underline; }
+  .project-part .ask-help:hover{ color:var(--white); }
+  .project-part .use-entry{ background:none; border:none; color:var(--green); font-size:11.5px; cursor:pointer; padding:0; text-decoration:underline; margin-left:36px; margin-bottom:10px; display:inline-block; }
+  .project-part .use-entry:hover{ color:var(--white); }
+  .project-part .save-part{ background:var(--green); color:var(--navy); border:none; border-radius:16px; padding:7px 16px; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .project-part .save-part:hover{ opacity:.9; }
+  .progress-line{ font-size:13px; color:var(--muted); margin-bottom:22px; }
+  .progress-line b{ color:var(--green); }
+
+  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--green); color:var(--navy); font-weight:700; font-size:13px; padding:10px 18px; border-radius:20px; opacity:0; transition:opacity .25s ease; pointer-events:none; }
+  .toast.show{ opacity:1; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------------------------------------------------------
+   Shim de almacenamiento: fuera de un artifact de Claude.ai no existe
+   window.storage, así que lo recreamos aquí encima de localStorage,
+   con la MISMA interfaz (get/set/list/delete) que usa el resto del
+   código. Esto guarda los datos en el navegador de cada persona —
+   privado por dispositivo, pero no sincronizado entre dispositivos
+   ni protegido por un login real (ver limitación en el instructivo,
+   sección 4.1).
+------------------------------------------------------------------ */
+window.storage = {
+  async get(key) {
+    const raw = localStorage.getItem(key);
+    if (raw === null) throw new Error("not found");
+    return { key, value: raw, shared: false };
+  },
+  async set(key, value) {
+    localStorage.setItem(key, value);
+    return { key, value, shared: false };
+  },
+  async delete(key) {
+    localStorage.removeItem(key);
+    return { key, deleted: true, shared: false };
+  },
+  async list(prefix) {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (!prefix || k.startsWith(prefix))) keys.push(k);
+    }
+    return { keys, prefix, shared: false };
+  }
+};
+
+const SYSTEM_PROMPTS = {
+  s1: "Eres LH Mirror, un copiloto de reflexi\u00f3n para new managers dentro del Diplomado Liderazgo en Acci\u00f3n. Modo: Diagn\u00f3stico de mi reto (Sesi\u00f3n 1). Ay\u00fada a la persona a convertir una situaci\u00f3n confusa de su equipo en un reto claro de liderazgo. Hazle preguntas, una a la vez, hasta identificar: el problema, a qui\u00e9n afecta, qu\u00e9 comportamiento est\u00e1 involucrado y qu\u00e9 resultado ser\u00eda deseable. No des soluciones ni opiniones. S\u00e9 c\u00e1lido pero directo, y breve en cada turno (2-4 l\u00edneas m\u00e1ximo). Cuando ya tengas claridad suficiente, cierra generando un problem statement de una sola frase, marcado claramente como 'Tu problem statement:'.",
+  s2: "Eres LH Mirror, un copiloto de reflexi\u00f3n para new managers dentro del Diplomado Liderazgo en Acci\u00f3n. Modo: Mi reacci\u00f3n autom\u00e1tica (Sesi\u00f3n 2 \u2014 Autogesti\u00f3n, autorregulaci\u00f3n y automotivaci\u00f3n). Simula UNA situaci\u00f3n de presi\u00f3n real\u00edstica y espec\u00edfica t\u00edpica de un nuevo manager (por ejemplo: un colaborador no entrega, dos personas del equipo discuten, alguien cuestiona tu autoridad en una reuni\u00f3n). Descr\u00edbela en 2-3 l\u00edneas concretas y pregunta: '\u00bfqu\u00e9 har\u00edas en los pr\u00f3ximos 30 segundos?'. Espera la respuesta. Despu\u00e9s, n\u00f3mbrale \u2014 sin juzgar \u2014 qu\u00e9 patr\u00f3n de autogesti\u00f3n parece estar operando (control, evitaci\u00f3n, inseguridad, dificultad para delegar, necesidad de aprobaci\u00f3n), y pregunta qu\u00e9 har\u00eda distinto si actuara desde su versi\u00f3n m\u00e1s regulada usando 3P (Pausa, Pregunta, Potencia). No menciones ni uses 4C ni preguntas de nivel 2-3 \u2014 esas herramientas todav\u00eda no se han visto en el diplomado a esta altura. S\u00e9 breve en cada turno (3-5 l\u00edneas m\u00e1ximo)."
+};
+
+const MODES = {
+  s1: {
+    accentHex: "#7C6FE0", eyebrow: "SESI\u00d3N 1", title: "Diagn\u00f3stico de mi reto",
+    desc: "Convierte una situaci\u00f3n confusa de tu equipo en un problem statement claro, a punta de preguntas.",
+    glyph: "?", enabled: true,
+    introBody: "Vas a describir, con tus palabras, una situaci\u00f3n real de tu equipo \u2014 algo que involucre personas, comunicaci\u00f3n, acuerdos o comportamiento. LH Mirror no te va a dar la respuesta: te va a hacer preguntas hasta que t\u00fa mismo/a la dejes clara. Al final vas a salir con una frase: tu problem statement.",
+    kickoff: "Quiero trabajar mi reto de liderazgo.",
+    demoPart: 0
+  },
+  s2: {
+    accentHex: "#2ECC87", eyebrow: "SESI\u00d3N 2", title: "Mi reacci\u00f3n autom\u00e1tica",
+    desc: "Practica c\u00f3mo reaccionas bajo presi\u00f3n, y descubre qu\u00e9 patr\u00f3n se te activa sin darte cuenta.",
+    glyph: "\u26a1", enabled: true,
+    introBody: "LH Mirror te va a plantear una situaci\u00f3n de presi\u00f3n parecida a lo que le pasa a cualquier new manager. Vas a responder qu\u00e9 har\u00edas en los primeros 30 segundos \u2014 sin pensarlo de m\u00e1s. Despu\u00e9s te va a nombrar, sin juzgar, qu\u00e9 patr\u00f3n parece estar operando.",
+    kickoff: "Estoy listo/a para la simulaci\u00f3n.",
+    demoPart: 3
+  },
+  s3: { accentHex: "#6667A0", eyebrow: "SESI\u00d3N 3", title: "Percepci\u00f3n 360", desc: "Próximamente \u2014 se habilita cuando diseñemos la Sesión 3.", glyph: "\u2022", enabled: false },
+  s4: { accentHex: "#6667A0", eyebrow: "FASE 4", title: "Copiloto del piloto", desc: "Próximamente \u2014 se habilita en Fase 4.", glyph: "\u2022", enabled: false }
+};
+
+const PROJECT_PARTS = [
+  { title: "Mi reto", phase: "Fase 1", fromMode: "s1", questions: [
+      "¿Cuál es el problema, en una frase?",
+      "¿A quién afecta específicamente?",
+      "¿Qué resultado sería deseable?"
+  ]},
+  { title: "Diagnóstico", phase: "Fase 2", fromMode: null, questions: [
+      "¿Qué observaste que no habías visto antes?",
+      "¿Qué te dijeron las personas involucradas cuando les preguntaste?",
+      "¿Qué patrón se repite?"
+  ]},
+  { title: "Acciones", phase: "Fase 2-3", fromMode: null, questions: [
+      "¿Qué conversación tuviste, con quién y cuándo?",
+      "¿Qué acuerdo construyeron?",
+      "¿Qué delegaste o dejaste de controlar?"
+  ]},
+  { title: "Aprendizajes", phase: "Fase 1-2", fromMode: "s2", questions: [
+      "¿Qué patrón tuyo se repitió (control, evitación, necesidad de aprobación...)?",
+      "¿Qué harías distinto si empezaras de nuevo?"
+  ]},
+  { title: "Impacto", phase: "Fase 3-4", fromMode: null, questions: [
+      "¿Qué cambió, por pequeño que sea?",
+      "¿Cómo lo sabes — qué viste o qué te dijeron?"
+  ]},
+  { title: "Próximos pasos", phase: "Fase 4", fromMode: null, questions: [
+      "¿Qué vas a sostener después del diplomado?",
+      "¿Quién te va a ayudar a sostenerlo?"
+  ]}
+];
+
+const STATUS_OPTIONS = [
+  { key: "borrador", label: "Borrador", color: "var(--muted-2)" },
+  { key: "progreso", label: "En progreso", color: "var(--purple)" },
+  { key: "lista", label: "Lista", color: "var(--green)" }
+];
+
+let state = {
+  screen: "loading",   // loading | name | select | intro | chat | bitacora | project
+  participantName: null,
+  mode: null,
+  chatContext: null,   // { accentHex, eyebrow, title, systemPrompt, backScreen, saveModeKey, kickoff }
+  messages: [],
+  entries: [],
+  projectText: {},
+  loading: false,
+  error: null
+};
+
+const app = document.getElementById("app");
+
+function setState(patch){ state = { ...state, ...patch }; render(); }
+
+function showToast(text){
+  const t = document.getElementById("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2000);
+}
+
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ---------------- Storage helpers ---------------- */
+async function loadName(){
+  try{
+    const r = await window.storage.get("participant_name", false);
+    return r ? r.value : null;
+  }catch(e){ return null; }
+}
+async function saveName(name){
+  try{ await window.storage.set("participant_name", name, false); }catch(e){}
+}
+async function saveEntry(mode, summary, messages){
+  const key = "entry:" + mode + ":" + Date.now();
+  const value = JSON.stringify({ mode, date: new Date().toISOString(), summary, messages });
+  try{
+    const res = await window.storage.set(key, value, false);
+    if(!res) throw new Error("no result");
+    showToast("Guardado en tu bitácora.");
+  }catch(e){
+    showToast("No se pudo guardar. Intenta de nuevo.");
+  }
+}
+async function loadEntries(){
+  try{
+    const list = await window.storage.list("entry:", false);
+    if(!list || !list.keys || !list.keys.length) return [];
+    const entries = [];
+    for(const k of list.keys){
+      try{
+        const r = await window.storage.get(k, false);
+        if(r && r.value) entries.push(JSON.parse(r.value));
+      }catch(e){ /* skip unreadable entry */ }
+    }
+    entries.sort((a,b)=> new Date(a.date) - new Date(b.date));
+    return entries;
+  }catch(e){ return []; }
+}
+
+async function loadProjectParts(){
+  const result = {};
+  for(let i = 0; i < PROJECT_PARTS.length; i++){
+    try{
+      const r = await window.storage.get("project:" + i, false);
+      result[i] = r ? JSON.parse(r.value) : { answers: [], status: "borrador" };
+    }catch(e){ result[i] = { answers: [], status: "borrador" }; }
+  }
+  return result;
+}
+async function saveProjectPart(index, data){
+  try{
+    const res = await window.storage.set("project:" + index, JSON.stringify(data), false);
+    if(!res) throw new Error("no result");
+    showToast("Guardado en tu proyecto.");
+  }catch(e){
+    showToast("No se pudo guardar. Intenta de nuevo.");
+  }
+}
+
+/* ---------------- Boot ---------------- */
+async function boot(){
+  const name = await loadName();
+  if(name){
+    setState({ participantName: name, screen: "select" });
+  }else{
+    setState({ screen: "name" });
+  }
+}
+
+/* ---------------- Render router ---------------- */
+function render(){
+  if(state.screen === "loading") { app.innerHTML = ""; return; }
+  if(state.screen === "name") return renderName();
+  if(state.screen === "select") return renderSelect();
+  if(state.screen === "intro") return renderIntro();
+  if(state.screen === "chat") return renderChat();
+  if(state.screen === "bitacora") return renderBitacora();
+  if(state.screen === "project") return renderProject();
+}
+
+function topNav(active){
+  return `
+    <div class="top-nav">
+      <div class="who">Hola, ${escapeHtml(state.participantName || "")}<button id="changeNameBtn">no soy yo</button></div>
+      <div class="links">
+        <button id="navSelect" style="${active==='select'?'color:var(--white)':''}">Simuladores</button>
+        <button id="navBitacora" style="${active==='bitacora'?'color:var(--white)':''}">Mi bitácora</button>
+        <button id="navProject" style="${active==='project'?'color:var(--white)':''}">Mi Proyecto</button>
+      </div>
+    </div>
+  `;
+}
+function bindTopNav(){
+  document.getElementById("changeNameBtn").addEventListener("click", ()=> setState({ screen:"name" }));
+  document.getElementById("navSelect").addEventListener("click", ()=> setState({ screen:"select" }));
+  document.getElementById("navBitacora").addEventListener("click", async ()=>{
+    const entries = await loadEntries();
+    setState({ screen:"bitacora", entries });
+  });
+  document.getElementById("navProject").addEventListener("click", async ()=>{
+    const entries = await loadEntries();
+    const projectText = await loadProjectParts();
+    setState({ screen:"project", entries, projectText });
+  });
+}
+
+/* ---------------- Screen: NAME ---------------- */
+function renderName(){
+  app.innerHTML = `
+    <div class="name-screen">
+      <div class="mirror-mark">
+        <div class="top" style="font-size:40px;">LH</div>
+        <div class="waterline" style="width:100px;"></div>
+        <div class="bottom" style="font-size:40px;">LH</div>
+      </div>
+      <h2>¿Cómo te llamas?</h2>
+      <p>Con esto guardamos tu bitácora entre sesiones. Nada se comparte con el grupo.</p>
+      <input id="nameInput" type="text" placeholder="Tu nombre" autofocus />
+      <button class="start-btn" id="nameContinue" style="width:100%;background:var(--green);">Continuar</button>
+    </div>
+  `;
+  const input = document.getElementById("nameInput");
+  const go = async ()=>{
+    const val = input.value.trim();
+    if(!val) return;
+    await saveName(val);
+    setState({ participantName: val, screen: "select" });
+  };
+  document.getElementById("nameContinue").addEventListener("click", go);
+  input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") go(); });
+  input.focus();
+}
+
+/* ---------------- Screen: SELECT ---------------- */
+function renderSelect(){
+  app.innerHTML = `
+    ${topNav('select')}
+    <div class="select-screen">
+      <div class="mirror-mark">
+        <div class="top">LH</div>
+        <div class="waterline"></div>
+        <div class="bottom">LH</div>
+      </div>
+      <div class="tagline">Tu espejo de liderazgo. No te da respuestas &mdash; te ayuda a verte.</div>
+      <div class="mode-grid">
+        ${Object.entries(MODES).map(([key, m]) => `
+          <button class="mode-card ${m.enabled ? '' : 'disabled'}" style="--accent:${m.accentHex}" data-mode="${key}" ${m.enabled ? '' : 'disabled'}>
+            <div class="glyph">${m.glyph}</div>
+            <div class="eyebrow">${m.eyebrow}</div>
+            <h3>${m.title}</h3>
+            <p>${m.desc}</p>
+            <div class="cta">${m.enabled ? 'Entrar &rarr;' : 'Próximamente'}</div>
+          </button>
+        `).join("")}
+      </div>
+      <div class="footer-note">LH Mirror &middot; Diplomado Liderazgo en Acci&oacute;n &middot; Fase 1</div>
+    </div>
+  `;
+  bindTopNav();
+  app.querySelectorAll(".mode-card:not(.disabled)").forEach(btn=>{
+    btn.addEventListener("click", ()=> setState({ screen:"intro", mode: btn.dataset.mode, messages: [], error:null }));
+  });
+}
+
+/* ---------------- Screen: INTRO ---------------- */
+function renderIntro(){
+  const m = MODES[state.mode];
+  app.innerHTML = `
+    <div class="intro-screen">
+      <button class="back-link">&larr; Elegir otro modo</button>
+      <div class="eyebrow" style="color:${m.accentHex}">${m.eyebrow} &middot; LH MIRROR</div>
+      <h2>${m.title}</h2>
+      <div class="body-text">${m.introBody}</div>
+      <button class="start-btn" style="background:${m.accentHex}">Comenzar</button>
+    </div>
+  `;
+  app.querySelector(".back-link").addEventListener("click", ()=> setState({ screen:"select" }));
+  app.querySelector(".start-btn").addEventListener("click", ()=>{
+    startConversation({
+      accentHex: m.accentHex, eyebrow: m.eyebrow, title: m.title,
+      systemPrompt: SYSTEM_PROMPTS[state.mode], backScreen: "select",
+      saveModeKey: state.mode, kickoff: m.kickoff
+    });
+  });
+}
+
+/* ---------------- Screen: CHAT ---------------- */
+function renderChat(){
+  const ctx = state.chatContext;
+  app.innerHTML = `
+    <div class="chat-screen">
+      <div class="chat-header">
+        <div class="brand"><div class="mark">LH Mirror</div></div>
+        <div class="mode-label" style="color:${ctx.accentHex}">${ctx.eyebrow} &middot; ${ctx.title}</div>
+        <div class="actions">
+          <button id="restartBtn">Reiniciar</button>
+          <button id="switchBtn">${ctx.backScreen === "project" ? "Volver a Mi Proyecto" : "Cambiar de modo"}</button>
+        </div>
+      </div>
+      <div class="messages" id="messages">
+        ${state.messages.filter(msg => !msg.hidden).map(msg => `<div class="msg ${msg.role}" style="${msg.role==='assistant' ? `border-left-color:${ctx.accentHex}`:''}">${escapeHtml(msg.content)}</div>`).join("")}
+        ${state.loading ? `<div class="msg thinking">LH Mirror est\u00e1 pensando...</div>` : ""}
+        ${state.error ? `<div class="msg error">${escapeHtml(state.error)}</div>` : ""}
+      </div>
+      <div class="toolbar">
+        <button class="copy" id="copyBtn">Copiar \u00faltima respuesta</button>
+        <button class="save" id="saveBtn">Guardar en mi bit\u00e1cora</button>
+      </div>
+      <div class="composer">
+        <textarea id="input" placeholder="Escribe tu respuesta..." ${state.loading ? "disabled":""}></textarea>
+        <button id="sendBtn" ${state.loading ? "disabled":""}>Enviar</button>
+      </div>
+    </div>
+  `;
+  const msgsEl = document.getElementById("messages");
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+
+  document.getElementById("restartBtn").addEventListener("click", ()=>{
+    startConversation(state.chatContext);
+  });
+  document.getElementById("switchBtn").addEventListener("click", async ()=>{
+    if(ctx.backScreen === "project"){
+      const entries = await loadEntries();
+      const projectText = await loadProjectParts();
+      setState({ screen:"project", messages:[], entries, projectText });
+    }else{
+      setState({ screen:"select", messages:[] });
+    }
+  });
+  document.getElementById("copyBtn").addEventListener("click", copyLastAssistant);
+  document.getElementById("saveBtn").addEventListener("click", async ()=>{
+    const last = [...state.messages].reverse().find(x => x.role === "assistant");
+    if(!last){ showToast("Todavía no hay nada que guardar."); return; }
+    await saveEntry(ctx.saveModeKey, last.content, state.messages.filter(x=>!x.hidden));
+  });
+
+  const input = document.getElementById("input");
+  const sendBtn = document.getElementById("sendBtn");
+  sendBtn.addEventListener("click", handleSend);
+  input.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); handleSend(); }
+  });
+  input.focus();
+}
+
+/* ---------------- Screen: BITACORA ---------------- */
+function renderBitacora(){
+  const modeLabel = (mode) => {
+    if(MODES[mode]) return MODES[mode].eyebrow + " \u00b7 " + MODES[mode].title;
+    if(typeof mode === "string" && mode.startsWith("ayuda:")){
+      const idx = Number(mode.split(":")[1]);
+      const part = PROJECT_PARTS[idx];
+      return part ? "AYUDA \u00b7 " + part.title : "Ayuda con mi proyecto";
+    }
+    return mode;
+  };
+  app.innerHTML = `
+    ${topNav('bitacora')}
+    <div class="bitacora-screen">
+      <h2>Mi bitácora</h2>
+      <div class="sub">Todo lo que has guardado en LH Mirror, en orden. Esto es lo que vas a usar para armar tu Demo Final.</div>
+      ${state.entries.length === 0 ? `<div class="empty-state">Todavía no has guardado nada. Entra a un simulador y usa "Guardar en mi bitácora" cuando llegues a algo que valga la pena conservar.</div>` : ""}
+      ${state.entries.map(e => `
+        <div class="entry-card" style="--accent-e:${MODES[e.mode] ? MODES[e.mode].accentHex : '#6667A0'}">
+          <div class="meta">${modeLabel(e.mode)} &middot; ${new Date(e.date).toLocaleDateString('es-GT', { day:'numeric', month:'short', year:'numeric' })}</div>
+          <div class="summary">${escapeHtml(e.summary)}</div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+  bindTopNav();
+}
+
+/* ---------------- Screen: MI PROYECTO ---------------- */
+function renderProject(){
+  const readyCount = Object.values(state.projectText).filter(p => p && p.status === "lista").length;
+  app.innerHTML = `
+    ${topNav('project')}
+    <div class="project-screen">
+      <h2>Mi Proyecto de Liderazgo</h2>
+      <div class="sub">Este es tu espacio para trabajar el proyecto real, sesión a sesión. Contesta las preguntas guía de cada parte, marca cómo va, y pide ayuda a LH Mirror si te trabas.</div>
+      <div class="progress-line"><b>${readyCount} de ${PROJECT_PARTS.length}</b> partes marcadas como listas</div>
+      ${PROJECT_PARTS.map((p, i) => {
+        const data = state.projectText[i] || { answers: [], status: "borrador" };
+        const relatedEntry = p.fromMode ? [...state.entries].reverse().find(e => e.mode === p.fromMode) : null;
+        return `
+          <div class="project-part" data-index="${i}">
+            <div class="head">
+              <div class="headline"><span class="num">${i+1}</span><span class="title">${p.title}</span></div>
+              <span class="phase-tag">${p.phase}</span>
+            </div>
+            ${relatedEntry ? `<button class="use-entry" data-index="${i}" data-summary="${escapeHtml(relatedEntry.summary)}">Usar mi respuesta de ${MODES[p.fromMode].eyebrow} para la pregunta 1</button>` : ""}
+            ${p.questions.map((q, qi) => `
+              <div class="qgroup">
+                <div class="qlabel">${q}</div>
+                <textarea id="p${i}-q${qi}" placeholder="Escribe aquí...">${escapeHtml((data.answers && data.answers[qi]) || "")}</textarea>
+              </div>
+            `).join("")}
+            <div class="footer-row">
+              <div class="status-group">
+                ${STATUS_OPTIONS.map(s => `
+                  <button class="status-pill ${data.status === s.key ? 'active' : ''}" style="${data.status === s.key ? `background:${s.color};border-color:${s.color}` : ''}" data-index="${i}" data-status="${s.key}">${s.label}</button>
+                `).join("")}
+              </div>
+              <div class="actions-right">
+                <button class="ask-help" data-index="${i}">Pídele ayuda a LH Mirror con esto</button>
+                <button class="save-part" data-index="${i}">Guardar</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+  bindTopNav();
+
+  app.querySelectorAll(".use-entry").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const idx = btn.dataset.index;
+      const ta = document.getElementById(`p${idx}-q0`);
+      ta.value = btn.dataset.summary;
+      ta.focus();
+    });
+  });
+  app.querySelectorAll(".status-pill").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const idx = Number(btn.dataset.index);
+      const status = btn.dataset.status;
+      const part = PROJECT_PARTS[idx];
+      const answers = part.questions.map((q, qi) => document.getElementById(`p${idx}-q${qi}`).value);
+      const data = { answers, status };
+      state.projectText[idx] = data;
+      await saveProjectPart(idx, data);
+      render();
+    });
+  });
+  app.querySelectorAll(".ask-help").forEach(btn=>{
+    btn.addEventListener("click", ()=> startPartHelp(Number(btn.dataset.index)));
+  });
+  app.querySelectorAll(".save-part").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const idx = Number(btn.dataset.index);
+      const part = PROJECT_PARTS[idx];
+      const answers = part.questions.map((q, qi) => document.getElementById(`p${idx}-q${qi}`).value);
+      const status = (state.projectText[idx] && state.projectText[idx].status) || "borrador";
+      const data = { answers, status };
+      state.projectText[idx] = data;
+      await saveProjectPart(idx, data);
+    });
+  });
+}
+
+/* ---------------- Conversation logic ---------------- */
+async function startConversation(ctx){
+  setState({ screen:"chat", chatContext: ctx, messages: [], loading:true, error:null });
+  await sendToClaude([{ role:"user", content: ctx.kickoff, hidden:true }]);
+}
+
+function startPartHelp(index){
+  const part = PROJECT_PARTS[index];
+  const qList = part.questions.map((q, i) => `${i+1}. ${q}`).join(" ");
+  const systemPrompt = `Eres LH Mirror, ayudando a esta persona a pensar la secci\u00f3n "${part.title}" de su Proyecto Real de Liderazgo, dentro del Diplomado Liderazgo en Acci\u00f3n. Las preguntas gu\u00eda de esta secci\u00f3n son: ${qList}. Hazle preguntas de seguimiento, una a la vez, para ayudarla a construir sus propias respuestas. Dale retroalimentaci\u00f3n breve sobre lo que responde \u2014 qu\u00e9 est\u00e1 claro, qu\u00e9 le falta precisi\u00f3n \u2014 antes de pasar a la siguiente pregunta. Si despu\u00e9s de un par de intentos la persona sigue trabada o dice que no sabe c\u00f3mo responder, ofr\u00e9cele un ejemplo breve e inventado (no de su caso real) que ilustre el tipo de respuesta que buscas, y luego pregunta c\u00f3mo se ver\u00eda eso en su situaci\u00f3n. No le entregues la respuesta de su caso ya hecha \u2014 el ejemplo es para ilustrar, no para que lo copie. S\u00e9 c\u00e1lido y breve (2-4 l\u00edneas por turno). Cuando sientas que ya tiene claridad en una pregunta, res\u00famesela en una frase clara antes de pasar a la siguiente, para que la pueda copiar a su proyecto.`;
+  startConversation({
+    accentHex: "#7C6FE0", eyebrow: "AYUDA \u00b7 " + part.phase, title: part.title,
+    systemPrompt, backScreen: "project", saveModeKey: "ayuda:" + index,
+    kickoff: `Ayúdame a pensar la sección "${part.title}" de mi proyecto.`
+  });
+}
+
+function handleSend(){
+  const input = document.getElementById("input");
+  const text = input.value.trim();
+  if(!text || state.loading) return;
+  const newMessages = [...state.messages, { role:"user", content:text }];
+  setState({ messages:newMessages });
+  sendToClaude(newMessages);
+}
+
+async function sendToClaude(messagesForApi){
+  setState({ loading:true, error:null });
+  try{
+    const apiPayload = messagesForApi.map(({role, content}) => ({role, content}));
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system: state.chatContext.systemPrompt,
+        messages: apiPayload
+      })
+    });
+    if(!response.ok){ throw new Error("api error"); }
+    const data = await response.json();
+    const text = (data.text || "").trim();
+    if(!text){ throw new Error("empty"); }
+    const finalMessages = messagesForApi.concat([{ role:"assistant", content:text }]);
+    setState({ messages: finalMessages, loading:false });
+  }catch(err){
+    setState({ loading:false, error:"LH Mirror no pudo responder. Revisa tu conexi\u00f3n e intenta de nuevo." });
+  }
+}
+
+function copyLastAssistant(){
+  const lastAssistant = [...state.messages].reverse().find(m => m.role === "assistant");
+  if(!lastAssistant){ showToast("Todav\u00eda no hay nada que copiar."); return; }
+  navigator.clipboard.writeText(lastAssistant.content).then(()=>{
+    showToast("Copiado.");
+  }).catch(()=>{
+    showToast("No se pudo copiar autom\u00e1ticamente.");
+  });
+}
+
+boot();
+</script>
+</body>
+</html>
